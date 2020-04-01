@@ -19,7 +19,7 @@ COUNTIES_FNAME = 'covid-19-data/us-counties.csv'
 def create_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--states', nargs='+', help='States to display', 
-        required=True, dest='states')
+        default=list(), dest='states')
     parser.add_argument('-d', '--deaths', help='plot cumulative deaths', 
         dest='plot_deaths', action='store_true')
     return parser
@@ -29,6 +29,10 @@ def create_parser():
 def process_state_input(state_args):
     """replace state abbreviations with their full name"""
 
+    if len(state_args) == 0:
+        # there's no need to spend time loading and processing the mapping file
+        return state_args
+        
     # load the state abbreviations
     f = open(STATES_MAPPING_FNAME, 'r')
     mapping = json.load(f)
@@ -42,9 +46,11 @@ if __name__ == '__main__':
     # parse arguments
     parser = create_parser()
     args = parser.parse_args()
-    selected_states = process_state_input(args.states)
 
     df = pd.read_csv(STATES_FNAME)
+    selected_states = process_state_input(args.states)
+    if len(selected_states) == 0:
+        selected_states = sorted(list(df.state.unique()))
     fig, ax = plt.subplots()
     lines = [] # saves lines for use in legend
     mode = 'deaths' if args.plot_deaths else 'cases'
