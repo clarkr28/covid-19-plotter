@@ -20,6 +20,8 @@ def create_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--states', nargs='+', help='States to display', 
         required=True, dest='states')
+    parser.add_argument('-d', '--deaths', help='plot cumulative deaths', 
+        dest='plot_deaths', action='store_true')
     return parser
 
 
@@ -45,12 +47,13 @@ if __name__ == '__main__':
     df = pd.read_csv(STATES_FNAME)
     fig, ax = plt.subplots()
     lines = [] # saves lines for use in legend
+    mode = 'deaths' if args.plot_deaths else 'cases'
 
     # plot each state one at a time
     for state in selected_states:
         state_data = df.loc[df['state'] == state].sort_values(by=['date'])
         x = [date(int(d[:4]), int(d[5:7]), int(d[8:])) for d in state_data['date'].tolist()]
-        y = state_data['cases'].tolist()
+        y = state_data[mode].tolist()
         line, = ax.plot(x, y, marker='.')
         lines.append(line)
 
@@ -64,5 +67,5 @@ if __name__ == '__main__':
     ax.yaxis.tick_right()
     ax.grid(True)
     fig.autofmt_xdate()
-    plt.title('Cumulative COVID-19 cases by state')
+    plt.title('Cumulative COVID-19 {} by state'.format(mode))
     plt.show()
