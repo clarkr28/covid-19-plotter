@@ -22,6 +22,10 @@ def create_parser():
         default=list(), dest='keys')
     parser.add_argument('-d', '--deaths', help='plot cumulative deaths', 
         dest='plot_deaths', action='store_true')
+    parser.add_argument('-pd', '--per-day', help='plot new cases per day',
+        dest='per_day', action='store_true')
+    parser.add_argument('-s', '--start', help='start plotting at this day',
+        default='', dest='start_date_input')
     return parser
 
 
@@ -68,6 +72,18 @@ if __name__ == '__main__':
     labels = [] # list of labels that actually get used
     cases_or_deaths = 'deaths' if args.plot_deaths else 'cases'
 
+    # setup starting date
+    use_start_date = False
+    start_date = date.today() # placeholder
+    if args.start_date_input != '' and '-' in args.start_date_input:
+        use_start_date = True
+        m, d = args.start_date_input.split('-')[0:2]
+        try:
+            start_date = date(2020, int(m), int(d))
+        except Exception as e:
+            print('invalid start date')
+            use_start_date = False
+
     # plot each state one at a time
     for key in keys:
         key_data = s_df[s_df['state'] == 'fake'].sort_values(by=['date']) # empty placeholder
@@ -82,6 +98,20 @@ if __name__ == '__main__':
         # skip malformed data
         if len(x) == 0 or len(y) == 0 or len(x) != len(y):
             continue
+
+        # plot new cases per day instead of cumulative data
+        if args.per_day:
+            if len(y) >= 2:
+                y = [y[i] - y[i-1] for i in range(1,len(y))]
+                del x[0]
+            else:
+                continue
+
+        # apply start date filter
+        if use_start_date and start_date in x:
+            i = x.index(start_date)
+            x = x[i:]
+            y = y[i:]
 
         # plot line for specific key
         labels.append(key)
@@ -98,5 +128,6 @@ if __name__ == '__main__':
     ax.yaxis.tick_right()
     ax.grid(True)
     fig.autofmt_xdate()
-    plt.title('Cumulative COVID-19 {}'.format(cases_or_deaths))
+    totals_mode = 'New Daily' if args.per_day else 'Cumulative'
+    plt.title('{} COVID-19 {}'.format(totals_mode, cases_or_deaths.capitalize()))
     plt.show()
