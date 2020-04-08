@@ -61,24 +61,30 @@ if __name__ == '__main__':
     s_df = pd.read_csv(STATES_FNAME)
     c_df = pd.read_csv(COUNTIES_FNAME)
     keys = process_state_input(args.keys)
-    print(keys)
     if len(keys) == 0:
         keys = sorted(list(s_df.state.unique()))
     fig, ax = plt.subplots()
     lines = [] # saves lines for use in legend
-    mode = 'deaths' if args.plot_deaths else 'cases'
+    labels = [] # list of labels that actually get used
+    cases_or_deaths = 'deaths' if args.plot_deaths else 'cases'
 
     # plot each state one at a time
     for key in keys:
         key_data = s_df[s_df['state'] == 'fake'].sort_values(by=['date']) # empty placeholder
         if ':' in key:
             s, c = key.split(':')[0:2]
-            print('{}, {}, {}'.format(key, s, c))
             key_data = c_df[(c_df['state'] == s) & (c_df['county'] == c)].sort_values(by=['date'])
         else:
             key_data = s_df[s_df['state'] == key].sort_values(by=['date'])
         x = [date(int(d[:4]), int(d[5:7]), int(d[8:])) for d in key_data['date'].tolist()]
-        y = key_data[mode].tolist()
+        y = key_data[cases_or_deaths].tolist()
+        
+        # skip malformed data
+        if len(x) == 0 or len(y) == 0 or len(x) != len(y):
+            continue
+
+        # plot line for specific key
+        labels.append(key)
         line, = ax.plot(x, y, marker='.')
         lines.append(line)
 
@@ -92,5 +98,5 @@ if __name__ == '__main__':
     ax.yaxis.tick_right()
     ax.grid(True)
     fig.autofmt_xdate()
-    plt.title('Cumulative COVID-19 {} by state'.format(mode))
+    plt.title('Cumulative COVID-19 {}'.format(cases_or_deaths))
     plt.show()
