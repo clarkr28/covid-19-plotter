@@ -62,6 +62,10 @@ if __name__ == '__main__':
     parser = create_parser()
     args = parser.parse_args()
 
+    # scale default figure size
+    scale = 1.5
+    plt.rcParams['figure.figsize'] = [i * scale for i in plt.rcParams['figure.figsize']]
+
     s_df = pd.read_csv(STATES_FNAME)
     c_df = pd.read_csv(COUNTIES_FNAME)
     keys = process_state_input(args.keys)
