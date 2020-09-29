@@ -26,6 +26,8 @@ def create_parser():
         dest='per_day', action='store_true')
     parser.add_argument('-s', '--start', help='start plotting at this day',
         default='', dest='start_date_input')
+    parser.add_argument('-a', '--average', type=int, help='number of days to average',
+        default=1, dest='days_to_avg')
     return parser
 
 
@@ -117,6 +119,22 @@ if __name__ == '__main__':
             x = x[i:]
             y = y[i:]
 
+        # apply averaging 
+        if args.days_to_avg > 1:
+            if args.days_to_avg % 2 == 0:
+                args.days_to_avg += 1
+            new_y = list()
+            half = args.days_to_avg//2
+            total = 0
+            for i in range(half,len(y)-half):
+                total = sum(y[i-half:i+half+1])
+                new_y.append(total / (half+half+1))
+            y = new_y
+            # trim the dates that were not averaged because the window was not complete
+            for i in range(half):
+                del x[0]
+                del x[-1]
+
         # plot line for specific key
         labels.append(key)
         line, = ax.plot(x, y, marker='.')
@@ -133,5 +151,8 @@ if __name__ == '__main__':
     ax.grid(True)
     fig.autofmt_xdate()
     totals_mode = 'New Daily' if args.per_day else 'Cumulative'
-    plt.title('{} COVID-19 {}'.format(totals_mode, cases_or_deaths.capitalize()))
+    title_str = '{} COVID-19 {}'.format(totals_mode, cases_or_deaths.capitalize())
+    if args.days_to_avg > 1:
+        title_str += ' ({} day avg)'.format(args.days_to_avg)
+    plt.title(title_str)
     plt.show()
