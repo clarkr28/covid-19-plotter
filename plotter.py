@@ -119,26 +119,30 @@ if __name__ == '__main__':
             x = x[i:]
             y = y[i:]
 
-        # apply averaging 
+        # apply averaging and do special averaging plotting
         if args.days_to_avg > 1:
             if args.days_to_avg % 2 == 0:
                 args.days_to_avg += 1
-            new_y = list()
+            avg_y = list()
             half = args.days_to_avg//2
             total = 0
             for i in range(half,len(y)-half):
                 total = sum(y[i-half:i+half+1])
-                new_y.append(total / (half+half+1))
-            y = new_y
+                avg_y.append(total / (half+half+1))
+            # plot raw data and averaged data
+            labels.append(key)
+            ax.scatter(x, y, marker='.')
+            line, = ax.plot(x[half:-half], avg_y)
+            lines.append(line)
             # trim the dates that were not averaged because the window was not complete
-            for i in range(half):
-                del x[0]
-                del x[-1]
-
-        # plot line for specific key
-        labels.append(key)
-        line, = ax.plot(x, y, marker='.')
-        lines.append(line)
+            #for i in range(half):
+                #del x[0]
+                #del x[-1]
+        else:
+            # no avaraing, so apply plotting normally
+            labels.append(key)
+            line, = ax.plot(x, y, marker='.')
+            lines.append(line)
 
     # formatting plot
     ax.legend(lines, keys)
